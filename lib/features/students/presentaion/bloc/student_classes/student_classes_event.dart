@@ -19,19 +19,23 @@ final class FetchStudentClasses extends StudentClassesEvent {
 }
 
 final class ChangeStudentClassStatus extends StudentClassesEvent {
-  final int studentClassId;
-  final String token;
-  final bool activate;
-  final int studentId; // needed to refresh list
+  final ClassStatusRequestModel classStatusRequest;
+  final int studentId;
 
   const ChangeStudentClassStatus({
-    required this.studentClassId,
-    required this.token,
-    required this.activate,
+    required this.classStatusRequest,
     required this.studentId,
   });
 
   @override
-  List<Object?> get props =>
-      [studentClassId, token, activate, studentId];
+  List<Object?> get props => [classStatusRequest, studentId];
+}
+
+final class SubmitCreateStudentClass extends StudentClassesEvent {
+  final CreateStudentClassRequestModel request;
+
+  const SubmitCreateStudentClass({required this.request});
+
+  @override
+  List<Object?> get props => [request];
 }

@@ -33,7 +33,7 @@ class DashboardDataModel {
 
   factory DashboardDataModel.fromJson(Map<String, dynamic> json) {
     return DashboardDataModel(
-      dailyCollection: (json['daily_collection'] ?? 0).toDouble(),
+      dailyCollection: double.tryParse(json['daily_collection'].toString()) ?? 0.0,
       todayRegisteredStudentsCount:
           json['today_registered_students_count'] ?? 0,
       todayRegisteredStudents: (json['today_registered_students'] as List)

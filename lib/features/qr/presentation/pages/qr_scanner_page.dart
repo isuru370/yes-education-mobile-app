@@ -10,6 +10,7 @@ import '../../../students/presentaion/pages/single_student_view_page.dart';
 import '../bloc/read_attendance/read_attendance_bloc.dart';
 import '../bloc/read_payment/read_payment_bloc.dart';
 import '../bloc/read_student/read_student_bloc.dart';
+import '../bloc/read_student_classes/read_student_classes_bloc.dart';
 import '../bloc/read_tute/read_tute_bloc.dart';
 
 class QrScannerPage extends StatefulWidget {
@@ -25,8 +26,13 @@ class QrScannerPage extends StatefulWidget {
 class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
   bool _hasPermission = false;
   bool _isScanned = false;
+  bool _isHandlingResult = false;
 
-  // Manual entry controllers
+  final MobileScannerController _scannerController = MobileScannerController(
+    autoStart: false,
+    detectionSpeed: DetectionSpeed.noDuplicates,
+  );
+
   final TextEditingController _customIdController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
@@ -39,7 +45,10 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      routeObserver.subscribe(this, route);
+    }
   }
 
   @override
@@ -47,49 +56,132 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
     routeObserver.unsubscribe(this);
     _customIdController.dispose();
     _focusNode.dispose();
+    _scannerController.dispose();
     super.dispose();
   }
 
   @override
   void didPopNext() {
-    // Reset scanner and clear manual input when returning
-    setState(() {
-      _isScanned = false;
-      _customIdController.clear();
-    });
+    _customIdController.clear();
+    _resetScanner();
   }
 
   Future<void> _requestPermission() async {
     final status = await Permission.camera.request();
-    setState(() => _hasPermission = status.isGranted);
+    if (!mounted) return;
+
+    setState(() {
+      _hasPermission = status.isGranted;
+    });
+
+    if (_hasPermission) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _safeStartScanner();
+      });
+    }
+  }
+
+  Future<void> _safeStartScanner() async {
+    try {
+      await _scannerController.start();
+    } catch (_) {}
+  }
+
+  Future<void> _safeStopScanner() async {
+    try {
+      await _scannerController.stop();
+    } catch (_) {}
+  }
+
+  void _resetScanner() {
+    if (!mounted) return;
+
+    setState(() {
+      _isScanned = false;
+      _isHandlingResult = false;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _safeStartScanner();
+    });
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _handleScanValue(String value) async {
+    if (!mounted) return;
+    if (_isScanned || _isHandlingResult) return;
+
+    final trimmedValue = value.trim();
+    if (trimmedValue.isEmpty) return;
+
+    setState(() {
+      _isScanned = true;
+      _isHandlingResult = true;
+    });
+
+    _focusNode.unfocus();
+    await _safeStopScanner();
+
+    switch (widget.scanType) {
+      case ScanType.attendance:
+        context.read<ReadAttendanceBloc>().add(
+          ReadAttendanceRequested(token: widget.token, customId: trimmedValue),
+        );
+        break;
+
+      case ScanType.payment:
+        context.read<ReadPaymentBloc>().add(
+          ReadPaymentRequested(token: widget.token, customId: trimmedValue),
+        );
+        break;
+
+      case ScanType.student:
+        context.read<ReadStudentBloc>().add(
+          ReadStudentRequested(token: widget.token, customId: trimmedValue),
+        );
+        break;
+
+      case ScanType.tute:
+        context.read<ReadTuteBloc>().add(
+          ReadTuteRequested(token: widget.token, customId: trimmedValue),
+        );
+        break;
+
+      case ScanType.classes:
+        context.read<ReadStudentClassesBloc>().add(
+          ReadStudentClassesRequested(
+            token: widget.token,
+            qrCode: trimmedValue,
+          ),
+        );
+        break;
+    }
   }
 
   void _handleManualSubmit() {
-    if (_isScanned) return; // prevent double submission
+    final customId = _customIdController.text.toUpperCase().trim();
+    _handleScanValue(customId);
+  }
 
-    final customId = _customIdController.text.trim();
-    if (customId.isEmpty) return;
-
-    setState(() => _isScanned = true);
-    _focusNode.unfocus(); // hide keyboard
-
-    // Trigger the appropriate bloc event based on scanType
-    if (widget.scanType == ScanType.attendance) {
-      context.read<ReadAttendanceBloc>().add(
-        ReadAttendanceRequested(token: widget.token, customId: customId),
-      );
-    } else if (widget.scanType == ScanType.payment) {
-      context.read<ReadPaymentBloc>().add(
-        ReadPaymentRequested(token: widget.token, customId: customId),
-      );
-    } else if (widget.scanType == ScanType.student) {
-      context.read<ReadStudentBloc>().add(
-        ReadStudentRequested(token: widget.token, customId: customId),
-      );
-    } else if (widget.scanType == ScanType.tute) {
-      context.read<ReadTuteBloc>().add(
-        ReadTuteRequested(token: widget.token, customId: customId),
-      );
+  String _getTitle() {
+    switch (widget.scanType) {
+      case ScanType.attendance:
+        return 'Scan Attendance QR';
+      case ScanType.payment:
+        return 'Scan Payment QR';
+      case ScanType.tute:
+        return 'Scan Tute QR';
+      case ScanType.classes:
+        return 'Add Student Classes';
+      case ScanType.student:
+        return 'Scan Student';
     }
   }
 
@@ -101,10 +193,26 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
           title: const Text('Camera Permission'),
           backgroundColor: AppTheme.primaryColor,
         ),
-        body: const Center(
-          child: Text(
-            'Camera permission is required to scan QR codes.',
-            textAlign: TextAlign.center,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.camera_alt_outlined, size: 70),
+                const SizedBox(height: 16),
+                const Text(
+                  'Camera permission is required to scan QR codes.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _requestPermission,
+                  child: const Text('Grant Permission'),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -112,18 +220,17 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
 
     return MultiBlocListener(
       listeners: [
-        // ---------------- ATTENDANCE ----------------
         BlocListener<ReadAttendanceBloc, ReadAttendanceState>(
-          listener: (context, state) {
+          listenWhen: (previous, current) =>
+              current is ReadAttendanceLoaded || current is ReadAttendanceError,
+          listener: (context, state) async {
             if (state is ReadAttendanceLoaded) {
               if (state.attendanceList.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Class not available for this student.'),
-                  ),
-                );
-                _isScanned = false;
+                _showSnackBar('Class not available for this student.');
+                _resetScanner();
               } else {
+                await _safeStopScanner();
+                if (!mounted) return;
                 Navigator.pushNamed(
                   context,
                   '/attendance-details',
@@ -133,24 +240,22 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
             }
 
             if (state is ReadAttendanceError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
-              _isScanned = false;
+              _showSnackBar(state.message);
+              _resetScanner();
             }
           },
         ),
-
-        // ---------------- PAYMENT ----------------
         BlocListener<ReadPaymentBloc, ReadPaymentState>(
-          listener: (context, state) {
+          listenWhen: (previous, current) =>
+              current is ReadPaymentLoaded || current is ReadPaymentError,
+          listener: (context, state) async {
             if (state is ReadPaymentLoaded) {
               if (state.response.data.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('No payment records found.')),
-                );
-                _isScanned = false;
+                _showSnackBar('No payment records found.');
+                _resetScanner();
               } else {
+                await _safeStopScanner();
+                if (!mounted) return;
                 Navigator.pushNamed(
                   context,
                   '/payment-details',
@@ -160,20 +265,20 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
             }
 
             if (state is ReadPaymentError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
-              _isScanned = false;
+              _showSnackBar(state.message);
+              _resetScanner();
             }
           },
         ),
-
-        // ---------------- STUDENT ----------------
         BlocListener<ReadStudentBloc, ReadStudentState>(
-          listener: (context, state) {
+          listenWhen: (previous, current) =>
+              current is ReadStudentLoaded || current is ReadStudentError,
+          listener: (context, state) async {
             if (state is ReadStudentLoaded) {
               final student = state.response.data;
               if (student != null) {
+                await _safeStopScanner();
+                if (!mounted) return;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -184,30 +289,26 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
                   ),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      state.response.message ?? 'Student not found',
-                    ),
-                  ),
-                );
+                _showSnackBar(state.response.message ?? 'Student not found');
+                _resetScanner();
               }
             }
 
             if (state is ReadStudentError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              _showSnackBar(state.message);
+              _resetScanner();
             }
           },
         ),
-
-        // ---------------- TUTE ----------------
         BlocListener<ReadTuteBloc, ReadTuteState>(
-          listener: (context, state) {
+          listenWhen: (previous, current) =>
+              current is ReadTuteSuccess || current is ReadTuteFailure,
+          listener: (context, state) async {
             if (state is ReadTuteSuccess) {
               final tuteData = state.response.data;
               if (tuteData.isNotEmpty) {
+                await _safeStopScanner();
+                if (!mounted) return;
                 Navigator.pushNamed(
                   context,
                   '/read_tute',
@@ -217,16 +318,44 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
                   },
                 );
               } else {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('Tute data not found')));
+                _showSnackBar('Tute data not found');
+                _resetScanner();
               }
             }
 
             if (state is ReadTuteFailure) {
-              ScaffoldMessenger.of(
+              _showSnackBar(state.message);
+              _resetScanner();
+            }
+          },
+        ),
+        BlocListener<ReadStudentClassesBloc, ReadStudentClassesState>(
+          listenWhen: (previous, current) =>
+              current is ReadStudentClassesSuccess ||
+              current is ReadStudentClassesError,
+          listener: (context, state) async {
+            if (state is ReadStudentClassesSuccess) {
+              _showSnackBar(state.response.message);
+
+              await _safeStopScanner();
+              if (!mounted) return;
+
+              await Navigator.pushNamed(
                 context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+                '/add-student-class',
+                arguments: {
+                  'token': widget.token,
+                  'read_student_classes_state': state.response,
+                },
+              );
+
+              if (!mounted) return;
+              _resetScanner();
+            }
+
+            if (state is ReadStudentClassesError) {
+              _showSnackBar(state.message);
+              _resetScanner();
             }
           },
         ),
@@ -234,65 +363,38 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: AppTheme.primaryColor,
-          title: Text(
-            widget.scanType == ScanType.attendance
-                ? 'Scan Attendance QR'
-                : widget.scanType == ScanType.payment
-                ? 'Scan Payment QR'
-                : widget.scanType == ScanType.tute
-                ? 'Scan Tute QR'
-                : 'Scan Student',
-          ),
+          title: Text(_getTitle()),
           centerTitle: true,
         ),
         body: Stack(
           children: [
             MobileScanner(
+              controller: _scannerController,
               onDetect: (capture) {
-                if (_isScanned) return;
+                if (_isScanned || _isHandlingResult) return;
+                if (capture.barcodes.isEmpty) return;
 
                 final value = capture.barcodes.first.rawValue;
-                if (value == null || value.isEmpty) return;
+                if (value == null || value.trim().isEmpty) return;
 
-                _isScanned = true;
-
-                if (widget.scanType == ScanType.attendance) {
-                  context.read<ReadAttendanceBloc>().add(
-                    ReadAttendanceRequested(
-                      token: widget.token,
-                      customId: value,
-                    ),
-                  );
-                } else if (widget.scanType == ScanType.payment) {
-                  context.read<ReadPaymentBloc>().add(
-                    ReadPaymentRequested(token: widget.token, customId: value),
-                  );
-                } else if (widget.scanType == ScanType.student) {
-                  context.read<ReadStudentBloc>().add(
-                    ReadStudentRequested(token: widget.token, customId: value),
-                  );
-                } else if (widget.scanType == ScanType.tute) {
-                  context.read<ReadTuteBloc>().add(
-                    ReadTuteRequested(token: widget.token, customId: value),
-                  );
-                }
+                _handleScanValue(value);
               },
             ),
-            // Scanning guide overlay
             Center(
-              child: Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
-                    width: 3,
+              child: IgnorePointer(
+                child: Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                      width: 3,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
-            // Manual entry search bar
             Align(
               alignment: Alignment.topCenter,
               child: Padding(
@@ -303,7 +405,7 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       children: [
                         Expanded(
@@ -314,13 +416,16 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
                               hintText: 'Enter custom ID',
                               border: InputBorder.none,
                             ),
+                            textInputAction: TextInputAction.search,
                             onSubmitted: (_) => _handleManualSubmit(),
-                            enabled: !_isScanned,
+                            enabled: !_isScanned && !_isHandlingResult,
                           ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.search),
-                          onPressed: _isScanned ? null : _handleManualSubmit,
+                          onPressed: (_isScanned || _isHandlingResult)
+                              ? null
+                              : _handleManualSubmit,
                         ),
                       ],
                     ),
@@ -328,6 +433,11 @@ class _QrScannerPageState extends State<QrScannerPage> with RouteAware {
                 ),
               ),
             ),
+            if (_isScanned || _isHandlingResult)
+              Container(
+                color: Colors.black.withValues(alpha: 0.15),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
           ],
         ),
       ),

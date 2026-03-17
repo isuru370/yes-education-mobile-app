@@ -1,6 +1,1 @@
-enum ScanType {
-  attendance,
-  payment,
-  student,
-  tute,
-}
+enum ScanType { attendance, payment, student, tute, classes }

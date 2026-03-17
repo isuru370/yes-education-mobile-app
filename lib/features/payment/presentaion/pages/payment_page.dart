@@ -146,7 +146,7 @@ class _PaymentPageState extends State<PaymentPage> {
                           Colors.orange,
                         ),
                         _badge(
-                          'Fees: LKR ${category.fees}',
+                          'Fees: ${payment.isFreeCard ? 'Free Card' : 'LKR ${category.fees}'}',
                           Colors.green.shade100,
                           Colors.green,
                         ),
@@ -154,24 +154,24 @@ class _PaymentPageState extends State<PaymentPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // ---------------- LATEST PAYMENT ----------------
-                    if (latestPayment != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Latest Payment:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text('Amount: LKR ${latestPayment.amount}'),
-                          Text('Month: ${latestPayment.paymentForMonth}'),
-                          Text(
-                            'Date: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.parse(latestPayment.paymentDate).toLocal())}',
-                          ),
-                        ],
-                      )
-                    else
-                      const Text('No payments made yet.'),
+                    if (!payment.isFreeCard)
+                      if (latestPayment != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Latest Payment:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text('Amount: LKR ${latestPayment.amount}'),
+                            Text('Month: ${latestPayment.paymentForMonth}'),
+                            Text(
+                              'Date: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.parse(latestPayment.paymentDate).toLocal())}',
+                            ),
+                          ],
+                        )
+                      else
+                        const Text('No payments made yet.'),
                     const SizedBox(height: 12),
 
                     // ---------------- PAY BUTTON ----------------

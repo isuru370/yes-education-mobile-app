@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nexorait_education_app/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:nexorait_education_app/features/payment/presentaion/pages/payment_page.dart';
 import 'package:nexorait_education_app/features/profile/presentaion/pages/user_profile_page.dart';
+import 'package:nexorait_education_app/features/student_classes/presentaion/pages/create_student_classes.dart';
 import 'package:nexorait_education_app/features/student_temp_qr_code/presentaion/pages/temp_qr_page.dart';
 import 'package:nexorait_education_app/features/students/presentaion/pages/attendance_history_page.dart';
 import 'package:nexorait_education_app/features/students/presentaion/pages/create_student_page.dart';
@@ -63,6 +64,16 @@ class AppRoutes {
 
         return MaterialPageRoute(
           builder: (_) => StudentListPage(token: token ?? ''),
+        );
+      case '/add-student-class':
+        final args = settings.arguments as Map<String, dynamic>; // cast as Map
+
+        return MaterialPageRoute(
+          builder: (_) => CreateStudentClasses(
+            token: args['token'], // pass the token
+            readStudentClassesState:
+                args['read_student_classes_state'], // pass the loaded state
+          ),
         );
       case '/students_image_upload':
         final token = settings.arguments as String?;

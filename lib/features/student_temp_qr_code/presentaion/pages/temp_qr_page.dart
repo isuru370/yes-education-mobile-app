@@ -41,7 +41,7 @@ class _TempQrPageState extends State<TempQrPage> {
   // =========================
   void openWhatsApp(String phoneNumber, String message) async {
     if (phoneNumber.startsWith('0')) {
-      phoneNumber = '94' + phoneNumber.substring(1);
+      phoneNumber = '94${phoneNumber.substring(1)}';
     }
 
     final whatsappUrl = Uri.parse(
@@ -165,7 +165,8 @@ class _TempQrPageState extends State<TempQrPage> {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final qr = state.qrList[index];
-                        final qrKey = _qrKeys[qr.customId] ??= GlobalKey();
+                        final qrKey = _qrKeys[qr.temporaryQrCode] ??=
+                            GlobalKey();
 
                         final formattedDate = DateFormat(
                           'yyyy-MM-dd HH:mm',
@@ -200,7 +201,9 @@ class _TempQrPageState extends State<TempQrPage> {
                                         const SizedBox(height: 12),
 
                                         // Student Details below QR
-                                        Text('Custom ID: ${qr.customId}'),
+                                        Text(
+                                          'Custom ID: ${qr.temporaryQrCode}',
+                                        ),
                                         Text('Expires At: $formattedDate'),
                                         Text('Days Left: ${qr.daysLeft}'),
                                         const SizedBox(height: 12),
@@ -217,7 +220,7 @@ class _TempQrPageState extends State<TempQrPage> {
                                               color: Colors.white,
                                               padding: const EdgeInsets.all(8),
                                               child: QrImageView(
-                                                data: qr.customId,
+                                                data: qr.temporaryQrCode,
                                                 version: QrVersions.auto,
                                                 size: 80,
                                                 backgroundColor: Colors.white,
@@ -236,7 +239,7 @@ class _TempQrPageState extends State<TempQrPage> {
                                                 'ඔබේ temporary QR code';
                                             shareQrImage(
                                               qrKey,
-                                              qr.customId,
+                                              qr.temporaryQrCode,
                                               message,
                                             );
                                           },

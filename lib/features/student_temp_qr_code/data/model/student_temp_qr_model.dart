@@ -1,6 +1,6 @@
 class StudentTempQrModel {
   final int studentId;
-  final String customId;
+  final String temporaryQrCode;
   final String fullName;
   final String initialName;
   final String mobile;
@@ -12,7 +12,7 @@ class StudentTempQrModel {
 
   StudentTempQrModel({
     required this.studentId,
-    required this.customId,
+    required this.temporaryQrCode,
     required this.fullName,
     required this.initialName,
     required this.mobile,
@@ -26,7 +26,7 @@ class StudentTempQrModel {
   factory StudentTempQrModel.fromJson(Map<String, dynamic> json) {
     return StudentTempQrModel(
       studentId: json['student_id'],
-      customId: json['custom_id'],
+      temporaryQrCode: json['temporary_qr_code'],
       fullName: json['full_name'],
       initialName: json['initial_name'],
       mobile: json['mobile'],

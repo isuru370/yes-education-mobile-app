@@ -1,5 +1,7 @@
 import '../../data/models/student_classes_model/class_status_request_model.dart';
 import '../../data/models/student_classes_model/class_status_response_model.dart';
+import '../../data/models/student_classes_model/create_student_request_class_model.dart';
+import '../../data/models/student_classes_model/create_student_response__class_model.dart';
 import '../../data/models/student_classes_model/student_class_response_model.dart';
 import '../../data/models/student_classes_model/student_request_model.dart';
 
@@ -9,6 +11,8 @@ abstract class StudentClassesRepository {
   );
   Future<ClassStatusResponseModel> changeStudentClassStatus({
     required ClassStatusRequestModel request,
-    required bool activate,
   });
+  Future<CreateStudentClassResponseModel> createStudentClass(
+    CreateStudentClassRequestModel request,
+  );
 }

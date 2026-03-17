@@ -1,6 +1,6 @@
 class LatestPaymentModel {
   final int paymentId;
-  final int amount;
+  final double amount;
   final String paymentDate;
   final String paymentForMonth;
 
@@ -14,7 +14,7 @@ class LatestPaymentModel {
   factory LatestPaymentModel.fromJson(Map<String, dynamic> json) {
     return LatestPaymentModel(
       paymentId: json['payment_id'],
-      amount: json['amount'],
+      amount: double.parse(json['amount'].toString()),
       paymentDate: json['payment_date'],
       paymentForMonth: json['payment_for_month'],
     );

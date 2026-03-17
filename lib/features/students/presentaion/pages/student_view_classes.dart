@@ -98,14 +98,23 @@ class StudentViewClasses extends StatelessWidget {
                                       : Colors.red.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: Text(
-                                  item.status ? "Active" : "Inactive",
-                                  style: TextStyle(
-                                    color: item.status
-                                        ? AppTheme.primaryColor
-                                        : Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      item.status ? "Active" : "Inactive",
+                                      style: TextStyle(
+                                        color: item.status
+                                            ? AppTheme.primaryColor
+                                            : Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      item.isFreeCard ? 'Free Card' : 'Paid',
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 12),

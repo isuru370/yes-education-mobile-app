@@ -86,7 +86,7 @@ class _CreateTutePageState extends State<CreateTutePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "${student.firstName} ${student.lastName}",
+                  "${student.initialName}",
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

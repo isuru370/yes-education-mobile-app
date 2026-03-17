@@ -38,3 +38,13 @@ final class StudentClassStatusChanged extends StudentClassesState {
   List<Object?> get props => [message];
 }
 
+final class CreateStudentClassSuccess extends StudentClassesState {
+  final CreateStudentClassResponseModel response;
+
+  const CreateStudentClassSuccess({required this.response});
+
+  @override
+  List<Object?> get props => [response];
+}
+
+

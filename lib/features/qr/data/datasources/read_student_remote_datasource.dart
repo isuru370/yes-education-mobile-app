@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../core/constants/api_constants.dart';
@@ -15,8 +16,8 @@ class ReadStudentRemoteDatasource {
       headers: ApiConstants.headers(token: token),
     );
 
-    print('Status code: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    debugPrint('Status code: ${response.statusCode}');
+    debugPrint('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
       return ReadStudentResponseModel.fromJson(jsonDecode(response.body));

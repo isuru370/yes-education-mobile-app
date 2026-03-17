@@ -1,19 +1,21 @@
 class ClassStatusResponseModel {
   final String status;
   final String message;
-  final ClassStatusRecord record;
+  final ClassStatusRecord? record;
 
   ClassStatusResponseModel({
     required this.status,
     required this.message,
-    required this.record,
+    this.record,
   });
 
   factory ClassStatusResponseModel.fromJson(Map<String, dynamic> json) {
     return ClassStatusResponseModel(
-      status: json['status'] ?? '',
-      message: json['message'] ?? '',
-      record: ClassStatusRecord.fromJson(json['record'] ?? {}),
+      status: json['status']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      record: json['record'] is Map<String, dynamic>
+          ? ClassStatusRecord.fromJson(json['record'])
+          : null,
     );
   }
 }
@@ -41,15 +43,32 @@ class ClassStatusRecord {
 
   factory ClassStatusRecord.fromJson(Map<String, dynamic> json) {
     return ClassStatusRecord(
-      id: json['id'] ?? 0,
-      studentId: json['student_id'] ?? 0,
-      studentClassesId: json['student_classes_id'] ?? 0,
+      id: _parseInt(json['id']),
+      studentId: _parseInt(json['student_id']),
+      studentClassesId: _parseInt(json['student_classes_id']),
       classCategoryHasStudentClassId:
-          json['class_category_has_student_class_id'] ?? 0,
-      status: json['status'] ?? false,
-      isFreeCard: json['is_free_card'] ?? false,
-      createdAt: json['created_at'] ?? '',
-      updatedAt: json['updated_at'] ?? '',
+          _parseInt(json['class_category_has_student_class_id']),
+      status: _parseBool(json['status']),
+      isFreeCard: _parseBool(json['is_free_card']),
+      createdAt: json['created_at']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? '',
     );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is double) return value.toInt();
+    return 0;
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) {
+      final normalized = value.toLowerCase().trim();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
   }
 }

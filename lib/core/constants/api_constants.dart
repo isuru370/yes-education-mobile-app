@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'http://10.191.103.230:8000';
+  static const String baseUrl = 'https://yeseducation.nexorait.lk';
   //http://10.191.103.230:8000
   //https://yeseducation.nexorait.lk
   static const String apiUrl = '$baseUrl/api';

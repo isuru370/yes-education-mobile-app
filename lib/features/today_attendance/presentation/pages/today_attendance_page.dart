@@ -150,7 +150,7 @@ class _TodayAttendancePageState extends State<TodayAttendancePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "${student.fname} ${student.lname}",
+                    student.lname,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

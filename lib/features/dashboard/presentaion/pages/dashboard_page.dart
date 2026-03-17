@@ -436,6 +436,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 _buildMenuItem(
                   context,
+                  icon: Icons.add_home_outlined,
+                  title: 'Add Classes',
+                  onTap: () => _navigateToAddStudentClass(context),
+                ),
+                _buildMenuItem(
+                  context,
                   icon: Icons.person,
                   title: 'Student',
                   onTap: () => _navigateToStudent(context),
@@ -601,6 +607,15 @@ class _DashboardPageState extends State<DashboardPage> {
       context,
       '/students_image_upload',
       arguments: widget.token,
+    );
+  }
+
+  void _navigateToAddStudentClass(BuildContext context) {
+    Navigator.pop(context); // Close drawer
+    Navigator.pushNamed(
+      context,
+      '/qr-scan',
+      arguments: {'scanType': ScanType.classes, 'token': widget.token},
     );
   }
 

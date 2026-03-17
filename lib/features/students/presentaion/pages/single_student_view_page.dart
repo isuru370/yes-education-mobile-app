@@ -99,7 +99,7 @@ class SingleStudentViewPage extends StatelessWidget {
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Grade: ${student.grade?.gradeName ?? 'N/A'} • ${student.classType}',
+                  '${student.grade?.gradeName ?? 'N/A'} • ${student.classType} • ${student.temporaryQrCode}',
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               ),
@@ -138,15 +138,20 @@ class SingleStudentViewPage extends StatelessWidget {
                 _infoRow('Active', student.isActive ? 'Yes' : 'No'),
                 _infoRow(
                   'Created At',
-                  DateFormat(
-                    'yyyy MM dd HH:mm',
-                  ).format(DateTime.parse(student.createdAt ?? 'N/A')),
+                  student.createdAt != null
+                      ? DateFormat(
+                          'yyyy MM dd HH:mm',
+                        ).format(DateTime.parse(student.createdAt!).toLocal())
+                      : 'N/A',
                 ),
+
                 _infoRow(
                   'Updated At',
-                  DateFormat(
-                    'yyyy MM dd HH:mm',
-                  ).format(DateTime.parse(student.updatedAt ?? 'N/A')),
+                  student.updatedAt != null
+                      ? DateFormat(
+                          'yyyy MM dd HH:mm',
+                        ).format(DateTime.parse(student.updatedAt!).toLocal())
+                      : 'N/A',
                 ),
               ]),
             ],

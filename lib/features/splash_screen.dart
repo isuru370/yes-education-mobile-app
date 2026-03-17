@@ -33,8 +33,8 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // Navigate after 3 seconds
-    Timer(const Duration(seconds: 3), () {
+    // Navigate after 2 seconds
+    Timer(const Duration(seconds: 2), () {
       Navigator.pushReplacementNamed(context, '/signup');
     });
   }
@@ -68,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
                   SizedBox(
                     height: 140,
                     child: Image.asset(
-                      'assets/logo/w_logo.png',
+                      'assets/logo/white_logo.png',
                       fit: BoxFit.contain,
                     ),
                   ),

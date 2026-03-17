@@ -7,7 +7,9 @@ import '../../features/image_upload/core/image_upload_injection.dart';
 import '../../features/payment/core/mark_payment_injection.dart';
 import '../../features/qr/core/read_attendance_injection.dart';
 import '../../features/qr/core/read_payment_injection.dart';
+import '../../features/qr/core/read_student_classes_injection.dart';
 import '../../features/qr/core/read_tute_injection.dart';
+import '../../features/student_classes/core/class_room_injection.dart';
 import '../../features/student_grade/core/student_grade_injection.dart';
 import '../../features/student_temp_qr_code/core/student_temp_qr_injection.dart';
 import '../../features/students/core/attendance_history_injection.dart';
@@ -38,4 +40,6 @@ Future<void> init() async {
   await initStudentTempQrDI();
   await initTuteDI();
   await initReadTuteDI();
+  await initReadStudentClassDI();
+  await initClassRoomDI();
 }

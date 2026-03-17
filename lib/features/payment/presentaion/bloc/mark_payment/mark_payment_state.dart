@@ -23,7 +23,7 @@ class MarkPaymentLoaded extends MarkPaymentState {
 class MarkPaymentError extends MarkPaymentState {
   final String message;
 
-  MarkPaymentError({required this.message});
+  const MarkPaymentError({required this.message});
 
   @override
   List<Object> get props => [message];

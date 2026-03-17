@@ -2,7 +2,7 @@ class PaymentInfoModel {
   final bool paymentStatus;
   final String lastPaymentDate;
   final String paymentFor;
-  final int lastPaymentAmount;
+  final double lastPaymentAmount;
 
   PaymentInfoModel({
     required this.paymentStatus,
@@ -16,7 +16,8 @@ class PaymentInfoModel {
       paymentStatus: json['payment_status'],
       lastPaymentDate: json['last_payment_date'],
       paymentFor: json['payment_for'],
-      lastPaymentAmount: json['last_payment_amount'],
+      lastPaymentAmount:
+          double.tryParse(json['last_payment_amount'].toString()) ?? 0.0,
     );
   }
 }
