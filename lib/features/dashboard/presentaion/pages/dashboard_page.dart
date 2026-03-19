@@ -7,6 +7,7 @@ import '../../../auth/data/models/user_model.dart';
 import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/models/student_mini_model.dart';
 import '../bloc/mobile_dashboard/mobile_dashboard_bloc.dart';
+import '../bloc/sms/sms_bloc.dart';
 
 class DashboardPage extends StatefulWidget {
   final String token;
@@ -28,6 +29,7 @@ class _DashboardPageState extends State<DashboardPage> {
     context.read<MobileDashboardBloc>().add(
       GetMobileDashboardEvent(widget.token),
     );
+    context.read<SmsBloc>().add(GetSmsBalanceEvent(token: widget.token));
   }
 
   @override
@@ -58,6 +60,10 @@ class _DashboardPageState extends State<DashboardPage> {
               onRefresh: () async {
                 context.read<MobileDashboardBloc>().add(
                   GetMobileDashboardEvent(widget.token),
+                );
+
+                context.read<SmsBloc>().add(
+                  GetSmsBalanceEvent(token: widget.token),
                 );
               },
               child: ListView(
@@ -150,6 +156,46 @@ class _DashboardPageState extends State<DashboardPage> {
                     ],
                   ),
 
+                  const SizedBox(height: 12),
+
+                  BlocBuilder<SmsBloc, SmsState>(
+                    builder: (context, smsState) {
+                      if (smsState is SmsLoading) {
+                        return _buildCard(
+                          title: "SMS Balance",
+                          value: "Loading...",
+                          icon: Icons.sms,
+                          color: Colors.orange,
+                        );
+                      }
+
+                      if (smsState is SmsLoaded) {
+                        return _buildCard(
+                          title: "SMS Balance",
+                          value: smsState.response.data.currentBalance,
+                          icon: Icons.sms,
+                          color: Colors.orange,
+                        );
+                      }
+
+                      if (smsState is SmsError) {
+                        return _buildCard(
+                          title: "SMS Balance",
+                          value: "Unavailable",
+                          icon: Icons.sms_failed,
+                          color: Colors.red,
+                        );
+                      }
+
+                      return _buildCard(
+                        title: "SMS Balance",
+                        value: "--",
+                        icon: Icons.sms,
+                        color: Colors.orange,
+                      );
+                    },
+                  ),
+
                   const SizedBox(height: 24),
 
                   const Text(
@@ -228,6 +274,10 @@ class _DashboardPageState extends State<DashboardPage> {
   // ---------------- CLASS CARD ----------------
 
   Widget _buildClassCard(classItem) {
+    if (classItem.length == 0) {
+      return _buildEmptyBox("No Class Data");
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       height: 150,
@@ -236,93 +286,101 @@ class _DashboardPageState extends State<DashboardPage> {
         elevation: 3,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left Side: Class Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      classItem.subjectName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 220,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          classItem.subjectName ?? "-",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          "${classItem.gradeName ?? '-'} - ${classItem.className ?? '-'}",
+                        ),
+                        const SizedBox(height: 6),
+                        Text("Hall: ${classItem.hallName ?? '-'}"),
+                        const SizedBox(height: 6),
+                        Text(
+                          "${classItem.startTime ?? '-'} - ${classItem.endTime ?? '-'}",
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
-                    Text("${classItem.gradeName} - ${classItem.className}"),
-                    const SizedBox(height: 6),
-                    Text("Hall: ${classItem.hallName}"),
-                    const SizedBox(height: 6),
-                    Text(
-                      "${classItem.startTime} - ${classItem.endTime}",
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
-              // Right Side: Status Badge
-              if (classItem.status == 1)
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/today-attendance',
-                          arguments: {
-                            'class_id': classItem.classId,
-                            'attendance_id': classItem.attendanceId,
-                            'class_has_category_id':
-                                classItem.classCategory?.id,
-                            'token': widget.token,
+                  const SizedBox(width: 16),
+
+                  if (classItem.status == 1)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/today-attendance',
+                              arguments: {
+                                'class_id': classItem.classId,
+                                'attendance_id': classItem.attendanceId,
+                                'class_has_category_id':
+                                    classItem.classCategory?.id,
+                                'token': widget.token,
+                              },
+                            );
                           },
-                        );
-                        // print(
-                        //   "Navigating to attendance for class ${classItem.className} with attendance ID ${classItem.attendanceId}",
-                        // );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "View Attendance",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          "View Attendance",
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ),
+                        const SizedBox(height: 8),
+                        if (classItem.isOngoing == true)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "ONGOING",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-
-                    if (classItem.isOngoing && classItem.status == 1) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Text(
-                          "ONGOING",
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -330,7 +388,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // ---------------- STUDENT REGISTERED CARD ----------------
-  Widget _buildStudentRegisteredCard(StudentMiniModel student) {
+  Widget _buildStudentRegisteredCard(StudentMiniModel? student) {
+    if (student == null) {
+      return _buildEmptyBox("No Student Data");
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 3,
@@ -411,6 +473,27 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyBox(String message) {
+    return Container(
+      height: 120,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.inbox, color: Colors.grey, size: 32),
+            const SizedBox(height: 8),
+            Text(message, style: const TextStyle(color: Colors.grey)),
           ],
         ),
       ),

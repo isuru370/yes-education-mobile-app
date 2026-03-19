@@ -5,10 +5,7 @@ class MobileDashboardResponseModel {
   final bool status;
   final DashboardDataModel data;
 
-  MobileDashboardResponseModel({
-    required this.status,
-    required this.data,
-  });
+  MobileDashboardResponseModel({required this.status, required this.data});
 
   factory MobileDashboardResponseModel.fromJson(Map<String, dynamic> json) {
     return MobileDashboardResponseModel(
@@ -33,7 +30,8 @@ class DashboardDataModel {
 
   factory DashboardDataModel.fromJson(Map<String, dynamic> json) {
     return DashboardDataModel(
-      dailyCollection: double.tryParse(json['daily_collection'].toString()) ?? 0.0,
+      dailyCollection:
+          double.tryParse(json['daily_collection'].toString()) ?? 0.0,
       todayRegisteredStudentsCount:
           json['today_registered_students_count'] ?? 0,
       todayRegisteredStudents: (json['today_registered_students'] as List)

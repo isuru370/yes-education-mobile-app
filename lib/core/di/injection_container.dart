@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import '../../features/attendance/core/mark_attendance_injection.dart';
 import '../../features/auth/core/auth_injection.dart' as authDI;
 import '../../features/dashboard/core/mobile_dashboard_injection.dart';
+import '../../features/dashboard/core/sms_injection.dart';
 import '../../features/image_upload/core/image_upload_injection.dart';
 import '../../features/payment/core/mark_payment_injection.dart';
 import '../../features/qr/core/read_attendance_injection.dart';
@@ -42,4 +43,5 @@ Future<void> init() async {
   await initReadTuteDI();
   await initReadStudentClassDI();
   await initClassRoomDI();
+  await initSMSDI();
 }
